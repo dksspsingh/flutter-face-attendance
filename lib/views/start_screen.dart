@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:camera/camera.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -18,12 +20,11 @@ class _StartScreenState extends State<StartScreen>
   bool isCameraOpen = false;
   late CameraController _controller;
   late final ProgressBarController _progressController;
-  late int currentProgress = 48;
+  late int currentProgress = 0;
 
   @override
   void initState() {
     super.initState();
-
     _progressController = ProgressBarController(vsync: this);
   }
 
@@ -37,6 +38,31 @@ class _StartScreenState extends State<StartScreen>
     setState(() {
       isCameraOpen = true;
     });
+    _startProgress();
+  }
+
+  void _startProgress() {
+    setState(() {
+      const duration = Duration(seconds: 10);
+      _progressController.collapseBar(
+        duration: duration,
+        curve: Curves.easeIn,
+      );
+    });
+
+    _captureAndSendImage();
+  }
+
+  Future<void> _captureAndSendImage() async {
+    try {
+      final XFile image = await _controller.takePicture();
+      final bytes = await image.readAsBytes();
+      log('Image bytes: $bytes');
+      // Send bytes to API using http package
+      // Example: await _sendImageToAPI(bytes);
+    } catch (e) {
+      log('Error capturing image: $e');
+    }
   }
 
   @override
@@ -193,9 +219,9 @@ class _StartScreenState extends State<StartScreen>
                         collapsedProgressBarColor: const Color(0xFF5F69C7),
                         controller: _progressController,
                         progress: Duration(seconds: currentProgress),
-                        total: const Duration(seconds: 100),
+                        total: const Duration(seconds: 10),
                         onSeek: (position) {
-                          print('New position: $position');
+                          log('New position: $position');
                         },
                       ),
                     ),
